@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "craigslist-data"
+version = "0.1.0"
+description = ""
+authors = ["Nick Hand <nicholas.adam.hand@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pandas = "^1.4.1"
+scrapelib = "^2.0.6"
+bs4 = "^0.0.1"
+pydantic = "^1.9.0"
+click = "^8.0.4"
+rich = {extras = ["jupyter"], version = "^11.2.0"}
+loguru = "^0.6.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+isort = "^5.10.1"
+black = "^22.1.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+craigslist-data = "craigslist_data.cli:main"
