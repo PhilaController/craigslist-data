@@ -29,7 +29,7 @@ jobs:
           poetry install
       - name: Scrape latest data
         run: |-
-          poetry run craigslist-data data.json
+          poetry run craigslist-data data.json --limit 50
       - name: Commit and push if it changed
         run: |-
           git config user.name "Automated"
