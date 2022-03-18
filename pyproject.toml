@@ -11,8 +11,8 @@ scrapelib = "^2.0.6"
 bs4 = "^0.0.1"
 pydantic = "^1.9.0"
 click = "^8.0.4"
-rich = {extras = ["jupyter"], version = "^11.2.0"}
-loguru = "^0.6.0"
+loguru = "^0.5"
+aws-scraper = "^0.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -24,4 +24,4 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-craigslist-data = "craigslist_data.cli:main"
+craigslist-data = "craigslist_data.cli:cli"

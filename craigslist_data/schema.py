@@ -4,6 +4,10 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
+def get_or_none(obj, attr):
+    return getattr(obj, attr, None)
+
+
 class ApartmentListingSchema(BaseModel):
     """Data scraped from an apartment listing page."""
 
@@ -14,12 +18,12 @@ class ApartmentListingSchema(BaseModel):
     num_images: int
     lat: float
     lng: float
-    price: int
     attrs: List[str]
     posted_date: datetime
     result_date: datetime
     bedrooms: Optional[int] = None
     size: Optional[int] = None
+    price: Optional[int] = None
     updated_date: Optional[datetime] = None
     location_description: Optional[str] = None
 
@@ -43,7 +47,12 @@ class ApartmentListingSchema(BaseModel):
     @classmethod
     def scrape_price(cls, soup):
         """Apartment price."""
-        price = soup.select_one(".postingtitletext .price").text.strip()
+        price = get_or_none(soup.select_one(".postingtitletext .price"), "text")
+
+        if price is None:
+            return None
+
+        price = price.strip()
         return int(price.strip("$").replace(",", ""))
 
     @classmethod
@@ -51,7 +60,7 @@ class ApartmentListingSchema(BaseModel):
         """Number of bedrooms, if available."""
 
         # Housing attribute
-        housing = getattr(soup.select_one(".postingtitletext .housing"), "text", None)
+        housing = get_or_none(soup.select_one(".postingtitletext .housing"), "text")
         if housing is None:
             return None
 
@@ -67,7 +76,7 @@ class ApartmentListingSchema(BaseModel):
         """Size in square feet, if available."""
 
         # Housing attribute
-        housing = getattr(soup.select_one(".postingtitletext .housing"), "text", None)
+        housing = get_or_none(soup.select_one(".postingtitletext .housing"), "text")
         if housing is None:
             return None
 
@@ -86,16 +95,20 @@ class ApartmentListingSchema(BaseModel):
     @classmethod
     def scrape_title(cls, soup):
         """The title."""
-        return soup.select_one("#titletextonly").text.strip()
+        title = get_or_none(soup.select_one("#titletextonly"), "text")
+        if title is None:
+            return None
+
+        return title.strip()
 
     @classmethod
     def scrape_location_description(cls, soup):
         """The description of the location."""
-        desc = soup.select_one(".postingtitletext small")
+        desc = get_or_none(soup.select_one(".postingtitletext small"), "text")
         if desc is None:
             return None
 
-        return desc.text.strip().strip("()")
+        return desc.strip().strip("()")
 
     @classmethod
     def scrape_description(cls, soup):
