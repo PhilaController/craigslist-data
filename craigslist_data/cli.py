@@ -1,4 +1,5 @@
 from datetime import datetime
+from pdb import post_mortem
 
 import click
 from aws_scraper import __main__ as aws_scraper_cli
@@ -59,15 +60,27 @@ def submit(output_file, num_workers=20, **kwargs):
 
 @cli.command()
 @click.argument("data_path", type=str)
+@click.option(
+    "--posted-today",
+    is_flag=True,
+    default=False,
+    help="Only scrape apartments posted today.",
+)
+@click.option(
+    "--sleep",
+    type=int,
+    default=1,
+    help="Time in seconds between calls.",
+)
 @aws_scraper_cli.add_run_options
-def run(data_path, **kwargs):
+def run(data_path, posted_today=False, sleep=1, **kwargs):
     """Run craiglist scraper jobs."""
 
     # Load config
     load_dotenv(find_dotenv())
 
     # Initialize the scraper
-    scraper = CraigslistScraper()
+    scraper = CraigslistScraper(posted_today=posted_today, sleep=sleep)
 
     # Run the scraper
     aws_scraper_cli.run(
