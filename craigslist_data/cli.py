@@ -23,7 +23,13 @@ def cli():
 @click.argument("output_file", type=str)
 @aws_scraper_cli.add_submit_options
 @click.option("--num-workers", type=int, default=20, help="The number of workers")
-def submit(output_file, num_workers=20, **kwargs):
+@click.option(
+    "--posted-today",
+    is_flag=True,
+    default=False,
+    help="Only scrape apartments posted today.",
+)
+def submit(output_file, num_workers=20, posted_today=False, **kwargs):
     """Submit craigslist scraping jobs to AWS."""
 
     # Check input
@@ -42,9 +48,14 @@ def submit(output_file, num_workers=20, **kwargs):
     data_path = f"s3://{BUCKET_NAME}/data/search-results-{tag}.csv"
     io.save_data_to_s3(search_results, aws.S3Path(data_path))
 
+    # Create the command
+    command = f"{APP_NAME} run {data_path}"
+    if posted_today:
+        command += " --posted-today"
+
     # Submit the jobs
     data = aws_scraper_cli.submit(
-        f"{APP_NAME} run {data_path}",
+        command,
         num_workers=num_workers,
         bucket_name=BUCKET_NAME,
         cluster_name="aws-scraper",
