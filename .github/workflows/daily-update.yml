@@ -2,7 +2,7 @@ name: Daily Update
 
 on:
   schedule:
-    - cron: "03 6 * * *"
+    - cron: "03 02 * * *" # 2:03 AM UTC
   workflow_dispatch: {}
   push:
     paths:
