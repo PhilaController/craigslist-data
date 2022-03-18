@@ -41,7 +41,8 @@ def submit(output_file, num_workers=20, posted_today=False, **kwargs):
 
     # Scrape the URLs for individual apartments
     # from the search portal
-    search_results = scrape_search_results()
+    search_results = scrape_search_results(posted_today=posted_today)
+    logger.info(f"Scraping data for {len(search_results)} apartments.")
 
     # Upload to an s3 folder
     tag = datetime.today().strftime("%Y-%m-%d-%H-%M")

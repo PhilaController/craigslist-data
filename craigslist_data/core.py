@@ -18,11 +18,15 @@ SEARCH_API = "/search/apa"
 CRAIGSLIST_URL = BASE_URL + SEARCH_API
 
 
-def scrape_search_results(requests_per_minute: int = 60) -> pd.DataFrame:
+def scrape_search_results(
+    posted_today: bool = False, requests_per_minute: int = 60
+) -> pd.DataFrame:
     """Scrape search results for aparements on Craigslist."""
 
     # Create the initial URL
     url = CRAIGSLIST_URL
+    if posted_today:
+        url += "?postedToday=1"
 
     # Initialize the scraper
     scraper = scrapelib.Scraper(requests_per_minute=requests_per_minute)
