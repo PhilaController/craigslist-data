@@ -1,17 +1,14 @@
-import random
 import time
 
 import pandas as pd
-import scrapelib
 from aws_scraper.scrape import WebScraper
 from bs4 import BeautifulSoup
 from loguru import logger
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 from .schema import ApartmentListingSchema
-
-# from rich.progress import track
-# from tryagain import retries
-
 
 BASE_URL = "http://philadelphia.craigslist.org"
 SEARCH_API = "/search/apa"
@@ -19,7 +16,7 @@ CRAIGSLIST_URL = BASE_URL + SEARCH_API
 
 
 def scrape_search_results(
-    posted_today: bool = False, requests_per_minute: int = 60
+    posted_today: bool = False, sleep: int = 1, headless: bool = True
 ) -> pd.DataFrame:
     """Scrape search results for aparements on Craigslist."""
 
@@ -29,20 +26,34 @@ def scrape_search_results(
         url += "?postedToday=1"
 
     # Initialize the scraper
-    scraper = scrapelib.Scraper(requests_per_minute=requests_per_minute)
+    scraper = CraigslistScraper(
+        posted_today=posted_today, sleep=sleep, headless=headless
+    )
 
     # Log
     logger.info("Scraping URLs from each search result page...")
 
     # Loop
     search_results = []
+    page_num = 0
     while url is not None:
 
-        # Request
-        soup = BeautifulSoup(scraper.get(url).content, "html.parser")
+        # Add page number to url
+        _url = url + f"#search=1~gallery~{page_num}~0"
+
+        # Navigate to the URL and pause
+        scraper.driver.get(_url)
+
+        # Wait
+        WebDriverWait(scraper.driver, 10).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, ".cl-search-result")),
+        )
+
+        # Create the soup
+        soup = BeautifulSoup(scraper.driver.page_source, "html.parser")
 
         # All the apartments
-        apts = soup.select(".result-row")
+        apts = soup.select(".cl-search-result")
 
         # Loop
         for apt in apts:
@@ -51,21 +62,24 @@ def scrape_search_results(
             data = {}
 
             # Get the URL
-            data["url"] = apt.select_one(".result-title")["href"]
+            data["url"] = apt.select_one(".cl-gallery")["href"]
 
             # Post id
             data["post_id"] = data["url"].split("/")[-1].split(".")[0]
 
             # Result id
-            data["result_date"] = apt.select_one(".result-date")["datetime"]
+            data["result_date"] = apt.select_one(".post-date")["datetime"]
 
             # Save it
             search_results.append(data)
 
-        # Next url
-        next_href = soup.select_one("a.button.next")["href"]
-        if next_href != "":
-            url = BASE_URL + next_href
+        # Check for disabled next button
+        disabled_next_button = soup.select_one("button.cl-next-page.bd-disabled")
+
+        # No next page
+        if disabled_next_button is None:
+            page_num += 1
+            time.sleep(sleep)
         else:
             url = None
 
@@ -78,7 +92,7 @@ def scrape_search_results(
 class CraigslistScraper(WebScraper):
     """Craigslist scraper."""
 
-    def __init__(self, posted_today=False, sleep=1):
+    def __init__(self, posted_today=False, sleep=1, headless=True):
 
         # How long to sleep between calls
         self.sleep = sleep
@@ -89,12 +103,17 @@ class CraigslistScraper(WebScraper):
             url += "?postedToday=1"  # Only query those posted today
 
         # Call super
-        super().__init__(url=url, headless=True)
+        super().__init__(url=url, headless=headless)
 
     def __call__(self, row):
 
         # Navigate to the URL
         self.driver.get(row["url"])
+
+        # Wait
+        WebDriverWait(self.driver, 10).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, "h1.postingtitle")),
+        )
 
         # Create the soup
         soup = BeautifulSoup(self.driver.page_source, "html.parser")
