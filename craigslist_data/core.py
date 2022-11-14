@@ -62,13 +62,16 @@ def scrape_search_results(
             data = {}
 
             # Get the URL
-            data["url"] = apt.select_one(".cl-gallery")["href"]
+            data["url"] = apt.select_one(".titlestring")["href"]
 
             # Post id
             data["post_id"] = data["url"].split("/")[-1].split(".")[0]
 
             # Result id
-            data["result_date"] = apt.select_one(".post-date")["datetime"]
+            dt = apt.select_one(".when span")["title"]
+            i = dt.index("(")
+            dt = dt[0:i]
+            data["result_date"] = dt
 
             # Save it
             search_results.append(data)
