@@ -67,12 +67,6 @@ def scrape_search_results(
             # Post id
             data["post_id"] = data["url"].split("/")[-1].split(".")[0]
 
-            # Result id
-            dt = apt.select_one("div.meta > span:nth-child(1)")["title"]
-            i = dt.index("(")
-            dt = dt[0:i]
-            data["result_date"] = dt
-
             # Save it
             search_results.append(data)
 
